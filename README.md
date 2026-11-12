@@ -1,0 +1,79 @@
+# TotersLokalise iOS SDK
+
+The Swift Package implements the frozen TotersLokalise OTA protocol v1 for iOS 15+
+and macOS 12+.
+
+```swift
+import TotersLokalise
+
+let bundled = DictionaryBundledTranslations([
+    "en": ["common": ["welcome": "Welcome"]],
+    "ar": ["common": ["welcome": "مرحباً"]],
+])
+
+let client = TotersLokaliseClient(configuration: try TotersLokaliseConfiguration(
+    baseURL: URL(string: "https://arcade.stage.toters-api.com/toters-lokalise/api")!,
+    token: "gl_sdk_your_public_read_token",
+    projectId: "your-project-id",
+    environment: "production",
+    locale: "ar",
+    cache: try FileCacheAdapter(
+        directory: FileManager.default.urls(
+            for: .cachesDirectory,
+            in: .userDomainMask
+        )[0].appendingPathComponent("TotersLokalise")
+    ),
+    bundled: bundled
+))
+
+Task { await client.initialize() }
+
+// Always synchronous: OTA memory → bundled value → fallback → key.
+let title = client.translation(
+    for: "welcome",
+    namespace: "common",
+    fallback: "Welcome"
+)
+```
+
+`initialize()`, `refresh()`, and `setLocale(_:)` are asynchronous. Translation
+lookup never performs network access. Refresh validates scope, protocol, same
+origin, byte size, and SHA-256 before atomically replacing cache. Every failure
+keeps the last-known-good cache and bundled fallback available.
+
+The SwiftUI demo source is in `Examples/SwiftUIExample`. It is a configuration-
+driven, read-only client with release status, supported-locale switching, search,
+namespace filtering, pull-to-refresh, large-list rendering, and RTL support.
+
+## Installation
+
+### Swift Package Manager
+
+Add TotersLokalise to your project using Swift Package Manager:
+
+```swift
+dependencies: [
+    .package(
+        url: "https://github.com/toters-eng/toterslokalise-ios.git",
+        from: "1.0.0"
+    )
+]
+```
+
+Then add `TotersLokalise` as a dependency to your target.
+
+You can also add the package directly in Xcode using:
+
+**File → Add Package Dependencies**
+
+and enter:
+
+```text
+https://github.com/toters-eng/toterslokalise-ios.git
+```
+
+## Releasing
+
+Xcode reads versions straight from this repository's git tags; there is nothing to
+publish. Merge to `main`, then `git tag 1.0.1 && git push origin 1.0.1`. The
+Release workflow runs the tests and creates the GitHub release.

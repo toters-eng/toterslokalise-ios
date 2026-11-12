@@ -1,0 +1,24 @@
+name: Release
+
+# Swift Package Manager installs straight from git tags: pushing `1.2.3`
+# publishes version 1.2.3. This workflow re-runs the tests on the tag and
+# creates the GitHub release.
+on:
+  push:
+    tags: ['[0-9]+.[0-9]+.[0-9]+']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - run: swift test
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
