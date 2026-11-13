@@ -116,6 +116,28 @@ final class TotersLokaliseClientTests: XCTestCase {
       requests.allSatisfy { $0.1["Authorization"]?.hasPrefix("Bearer gl_sdk_") == true })
   }
 
+  func testTypedPlaceholdersFormatNumbersWithTheClientLocale() throws {
+    let client = try makeClient(
+      transport: QueueTransport(),
+      bundled: DictionaryBundledTranslations([
+        "en": [
+          "default": [
+            "items": "You have {0:number} items",
+            "total": "Total {0:decimal:2}",
+            "mixed": "{1:number} of {0}",
+            "text": "{0:number}",
+          ]
+        ]
+      ])
+    )
+
+    XCTAssertEqual(client.translation(for: "items", arguments: ["1234"]), "You have 1,234 items")
+    XCTAssertEqual(client.translation(for: "total", arguments: ["5"]), "Total 5.00")
+    XCTAssertEqual(client.translation(for: "mixed", arguments: ["x", "7"]), "7 of x")
+    // A value that is not a number is inserted unchanged.
+    XCTAssertEqual(client.translation(for: "text", arguments: ["abc"]), "abc")
+  }
+
   func testSafeApplePlaceholderFormattingUsesBundledAndFallbackValues() throws {
     let client = try makeClient(
       transport: QueueTransport(),
