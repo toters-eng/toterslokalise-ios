@@ -526,3 +526,16 @@ final class TotersLokaliseClientTests: XCTestCase {
     "sha256:" + SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
   }
 }
+
+final class ExportedBundledTranslationsTests: XCTestCase {
+  func testReadsExportFilesByNamespace() {
+    let bundled = ExportedBundledTranslations(files: [
+      "checkout": Data(#"{"data":{"en-US":{"pay_now":"Pay now"},"ar":{"pay_now":"ادفع الآن"}},"meta":{}}"#.utf8),
+      "legal": Data(#"{"terms":"Terms"}"#.utf8),
+    ])
+    XCTAssertEqual(bundled.translation(locale: "ar", namespace: "checkout", key: "pay_now"), "ادفع الآن")
+    XCTAssertEqual(bundled.translation(locale: "en-US", namespace: "checkout", key: "pay_now"), "Pay now")
+    XCTAssertEqual(bundled.translation(locale: "ar", namespace: "legal", key: "terms"), "Terms")
+    XCTAssertNil(bundled.translation(locale: "en-US", namespace: "checkout", key: "missing"))
+  }
+}

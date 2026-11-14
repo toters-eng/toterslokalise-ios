@@ -72,6 +72,20 @@ and enter:
 https://github.com/toters-eng/toterslokalise-ios.git
 ```
 
+## Build-only namespaces
+
+Namespaces marked **Build only** in TotersLokalise are left out of OTA releases.
+Download them in your CI/CD pipeline (one `<namespace>.json` per namespace, from
+`GET /api/v1/projects/{projectId}/translations?environment=production&namespace=<name>&format=json`;
+ready-made Bitbucket and GitHub Actions steps are on the Developer Hub) and bundle them
+with the app. Lookups fall back to these bundled strings.
+
+Add the `TotersLokalise` folder to the app target as a folder reference, then:
+
+```swift
+let bundled = ExportedBundledTranslations(bundle: .main, subdirectory: "TotersLokalise")
+```
+
 ## Releasing
 
 Xcode reads versions straight from this repository's git tags; there is nothing to
