@@ -1,6 +1,8 @@
-# TotersLokalise iOS SDK
+# Lingo Rider iOS SDK
 
-The Swift Package implements the frozen TotersLokalise OTA protocol v1 for iOS 15+
+> Lingo Rider keeps its technical name `toterslokalise` in packages, modules, classes and settings.
+
+The Swift Package implements the frozen Lingo Rider OTA protocol v1 for iOS 15+
 and macOS 12+.
 
 ```swift
@@ -49,13 +51,13 @@ namespace filtering, pull-to-refresh, large-list rendering, and RTL support.
 
 ### Swift Package Manager
 
-Add TotersLokalise to your project using Swift Package Manager:
+Add the Lingo Rider SDK (`toterslokalise-ios`) to your project using Swift Package Manager:
 
 ```swift
 dependencies: [
     .package(
         url: "https://github.com/toters-eng/toterslokalise-ios.git",
-        from: "1.2.0"
+        from: "1.2.1"
     )
 ]
 ```
@@ -74,7 +76,7 @@ https://github.com/toters-eng/toterslokalise-ios.git
 
 ## Build-only namespaces
 
-Namespaces marked **Build only** in TotersLokalise are left out of OTA releases.
+Namespaces marked **Build only** in Lingo Rider are left out of OTA releases.
 Download them in your CI/CD pipeline (one `<namespace>.json` per namespace, from
 `GET /api/v1/projects/{projectId}/translations?environment=production&namespace=<name>&format=json`;
 ready-made Bitbucket and GitHub Actions steps are on the Developer Hub) and bundle them
