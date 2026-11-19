@@ -57,7 +57,7 @@ Add the Lingo Rider SDK (`toterslokalise-ios`) to your project using Swift Packa
 dependencies: [
     .package(
         url: "https://github.com/toters-eng/toterslokalise-ios.git",
-        from: "1.2.1"
+        from: "1.3.0"
     )
 ]
 ```
@@ -87,6 +87,32 @@ Add the `TotersLokalise` folder to the app target as a folder reference, then:
 ```swift
 let bundled = ExportedBundledTranslations(bundle: .main, subdirectory: "TotersLokalise")
 ```
+
+## Apps that already use `Localizable.strings`
+
+An app that reads its text with `NSLocalizedString` and formats it with
+`String(format:)` can put OTA in front of its `.strings` files without changing
+its screens. `appleString(forKey:namespaces:)` returns a key's text exactly as
+the Lingo Rider iOS `.strings` export writes it, or `nil` when the current release
+doesn't have the key:
+
+- Placeholders in iOS form: `{0}` is `%@` (`%1$@` when the arguments aren't in
+  order), `{0:number}` is `%d`, `{0:decimal:2}` is `%.2f`, and a literal `%` is `%%`.
+- Plurals as in the export with **Plurals: in the .strings file**: `key` is the
+  "other" text and `key.one`, `key.few`… are its forms.
+- Namespaces are searched in the order given. For the same result as an export
+  that merges several namespaces into one file, pass them in byte order
+  (`["Chat-Keys", "Common", "VoIP-Keys", "default"]`).
+
+```swift
+// For example in a Bundle.localizedString(forKey:value:table:) override:
+if let text = client.appleString(forKey: key, namespaces: namespaces), !text.isEmpty {
+    return text
+}
+return bundledLookup(key)
+```
+
+The lookup never touches the network and is cached per release.
 
 ## Releasing
 
