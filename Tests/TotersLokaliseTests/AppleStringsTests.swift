@@ -26,6 +26,8 @@ final class AppleStringsTests: XCTestCase {
       ("Already iOS %@", "Already iOS %@"),
       ("${applicationName} orders", "${applicationName} orders"),
       ("${app}: {0}% off", "${app}: %@%% off"),
+      ("{0}%% off up to {1}", "%@%% off up to %@"),
+      ("{0}% and {1}%% off", "%@%% and %@%% off"),
     ]
     for (text, expected) in cases {
       XCTAssertEqual(appleStringsValue(text), expected, text)
@@ -61,6 +63,62 @@ final class AppleStringsTests: XCTestCase {
     XCTAssertNil(look("missing"))
     XCTAssertNil(look("title.few"), "only plurals have forms")
     XCTAssertNil(look("version.2"))
+  }
+
+  func testFormatArgumentsAreReadLikeStringFormat() {
+    XCTAssertEqual(appleFormatArguments("Hello %@"), [1: .object])
+    XCTAssertEqual(appleFormatArguments("%2$@ then %1$@"), [1: .object, 2: .object])
+    XCTAssertEqual(appleFormatArguments("%d items, %.2f each, %ld left"), [1: .integer, 2: .double, 3: .integer])
+    XCTAssertEqual(appleFormatArguments("50%% off"), [:])
+    XCTAssertEqual(appleFormatArguments("No arguments"), [:])
+    XCTAssertEqual(appleFormatArguments("%@%%% off"), [1: .object, 2: .integer], "\"% o\" is a real %o conversion")
+    XCTAssertNil(appleFormatArguments("%1$@ and %@"), "numbered and unnumbered mixed")
+    XCTAssertNil(appleFormatArguments("%1$@ and %1$d"), "one argument read as two kinds")
+    XCTAssertNil(appleFormatArguments("%*d"), "a * width reads an argument")
+    XCTAssertNil(appleFormatArguments("%n"))
+    XCTAssertNil(appleFormatArguments("trailing %"))
+    XCTAssertNil(appleFormatArguments("%k"))
+  }
+
+  func testOnlyTextSafeForTheAppsArgumentsFits() {
+    // Same arguments, reordered or fewer: safe.
+    XCTAssertTrue(appleFormat("%2$@ ile %1$@ tasarruf ettiniz", fits: "You’ve saved %@ with %@"))
+    XCTAssertTrue(appleFormat("Tasarruf ettiniz", fits: "You’ve saved %@ with %@"))
+    XCTAssertTrue(appleFormat("%2$@ only", fits: "%@ and %@"))
+    XCTAssertTrue(appleFormat("Plain text", fits: nil))
+    XCTAssertTrue(appleFormat("%1$d days", fits: "%d days"))
+    // Found in the customer app's strings: each would crash or print garbage.
+    XCTAssertFalse(
+      appleFormat("Lütfen %@’den büyük veya %@’ye eşit bir tutar girin", fits: "Please enter an amount that is greater than or equal to %@"),
+      "two arguments where the app passes one")
+    XCTAssertFalse(
+      appleFormat("دوماهیک پەسەندکرنا خو یا داخازیێ بدە. %@ دێ", fits: "Give your final approval for the order."),
+      "an argument where the app passes none")
+    XCTAssertFalse(appleFormat("%d items", fits: "%@ items"), "a number where the app passes text")
+    XCTAssertFalse(appleFormat("Hello %@", fits: nil), "no reference: no arguments allowed")
+    XCTAssertFalse(appleFormat("Hello %@", fits: "%1$@ %k"), "an unreadable reference allows no arguments")
+    XCTAssertFalse(appleFormat("50% off %k", fits: "50%% off"), "not a valid format")
+  }
+
+  func testClientLookupDropsTextThatDoesNotFitTheReference() async throws {
+    let artifact = makeArtifact(
+      namespaces: ["default": ["amount": "Between {0} and {1}", "greeting": "Hello {0}", "plain": "Hi"]],
+      plurals: [:])
+    let client = TotersLokaliseClient(
+      configuration: try TotersLokaliseConfiguration(
+        baseURL: URL(string: "https://ota.example/api")!,
+        token: "gl_sdk_public_reference_token_abcdefghijklmnopqrstuvwxyz",
+        projectId: "project",
+        environment: "production",
+        locale: "en-US",
+        transport: ReleaseTransport(artifacts: ["en-US": artifact])))
+    let initialized = await client.initialize()
+    XCTAssertEqual(initialized, .updated(release: 1))
+    XCTAssertEqual(client.appleString(forKey: "amount", namespaces: ["default"]), "Between %@ and %@")
+    XCTAssertNil(client.appleString(forKey: "amount", namespaces: ["default"], formatOf: "At least %@"))
+    XCTAssertEqual(client.appleString(forKey: "greeting", namespaces: ["default"], formatOf: "Hi %@"), "Hello %@")
+    XCTAssertEqual(client.appleString(forKey: "plain", namespaces: ["default"], formatOf: nil), "Hi")
+    XCTAssertNil(client.appleString(forKey: "missing", namespaces: ["default"], formatOf: "x"))
   }
 
   func testNamespacesAreSearchedInOrder() {

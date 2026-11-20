@@ -30,6 +30,21 @@ extension TotersLokaliseClient {
     appleStringCache[cacheKey] = .some(value)
     return value
   }
+
+  /// `appleString(forKey:namespaces:)`, kept only when it is safe to format
+  /// with the arguments the app passes for `reference`, the text the app was
+  /// built with (usually its development-language `Localizable.strings` value).
+  ///
+  /// Returns `nil`, so the app reads its bundled text, when the release's text
+  /// reads an argument `reference` does not, reads one as another kind
+  /// (`%d` where the app passes `%@`), or is not a valid format. A release can
+  /// then never make `String(format:)` crash or print garbage. Reading fewer
+  /// arguments than `reference` is allowed. With no `reference`, only text
+  /// that reads no arguments is returned.
+  public func appleString(forKey key: String, namespaces: [String], formatOf reference: String?) -> String? {
+    guard let value = appleString(forKey: key, namespaces: namespaces) else { return nil }
+    return appleFormat(value, fits: reference) ? value : nil
+  }
 }
 
 private let pluralFormNames: Set<String> = ["zero", "one", "two", "few", "many", "other"]
@@ -86,9 +101,10 @@ private let tokenPattern = try! NSRegularExpression(pattern: #"\{\{|\}\}|(?<!\$)
 private let indexedPattern = try! NSRegularExpression(pattern: #"^(\d+)(?::(number|decimal:(\d)))?$"#)
 private let namedPattern = try! NSRegularExpression(
   pattern: #"^([A-Za-z_][A-Za-z0-9_]*)(?::(number|decimal:(\d)))?$"#)
-// A literal % that is not already a format specifier ("% off" is text).
+// A literal % that is not already a format specifier ("% off" is text), or an
+// existing `%%` pair (text brought over already escaped), which stays one literal %.
 private let literalPercentPattern = try! NSRegularExpression(
-  pattern: #"%(?!(?:\d+\$)?[-+0]*\d*(?:\.\d+)?(?:hh|h|ll|l|q|z|t|j)?[@diuxXfFeEgGsScC%])"#)
+  pattern: #"%%|%(?!(?:\d+\$)?[-+0]*\d*(?:\.\d+)?(?:hh|h|ll|l|q|z|t|j)?[@diuxXfFeEgGsScC])"#)
 
 private struct ParsedToken {
   let id: String
