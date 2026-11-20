@@ -190,6 +190,25 @@ public final class TotersLokaliseClient: @unchecked Sendable {
     }
   }
 
+  /// The release's plural messages as written in Lingo Rider (`{count}`/`{0}` placeholders, one text per
+  /// plural form), for apps that read plurals through their own resources (Compose Multiplatform).
+  public func pluralTranslations(namespace: String? = nil) -> [TotersLokalisePluralEntry] {
+    lock.lock()
+    let snapshot = state?.artifact.pluralMessages ?? [:]
+    lock.unlock()
+    let names = namespace.map { [$0] } ?? Array(snapshot.keys)
+    var result: [TotersLokalisePluralEntry] = []
+    for name in names {
+      for (key, plural) in snapshot[name] ?? [:] {
+        result.append(
+          TotersLokalisePluralEntry(key: key, namespace: name, variable: plural.variable, forms: plural.forms))
+      }
+    }
+    return result.sorted {
+      $0.namespace == $1.namespace ? $0.key < $1.key : $0.namespace < $1.namespace
+    }
+  }
+
   public func supportedLocales() async throws -> [String] {
     let response = try await configuration.transport.get(
       url: try resolvedArtifactURL(
@@ -428,6 +447,15 @@ public struct TotersLokaliseTranslationEntry: Equatable, Sendable {
   public let key: String
   public let namespace: String
   public let value: String
+}
+
+public struct TotersLokalisePluralEntry: Equatable, Sendable {
+  public let key: String
+  public let namespace: String
+  /// The count's placeholder name (`count` in `{count} days`).
+  public let variable: String
+  /// Text per plural form: `zero`, `one`, `two`, `few`, `many`, `other`.
+  public let forms: [String: String]
 }
 
 private func pluralCategory(locale: String, count: Double) -> String {

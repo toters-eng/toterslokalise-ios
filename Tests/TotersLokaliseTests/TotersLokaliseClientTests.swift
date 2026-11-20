@@ -215,6 +215,14 @@ final class TotersLokaliseClientTests: XCTestCase {
       "7 عناصر لـ المتجر"
     )
     XCTAssertEqual(
+      client.pluralTranslations(),
+      [
+        TotersLokalisePluralEntry(
+          key: fixture.key, namespace: fixture.namespace, variable: "count", forms: plural.forms)
+      ]
+    )
+    XCTAssertEqual(client.pluralTranslations(namespace: "other-namespace"), [])
+    XCTAssertEqual(
       client.translation(for: fixture.key, namespace: fixture.namespace, count: 2),
       "عنصران"
     )
