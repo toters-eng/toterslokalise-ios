@@ -57,7 +57,7 @@ Add the Lingo Rider SDK (`toterslokalise-ios`) to your project using Swift Packa
 dependencies: [
     .package(
         url: "https://github.com/toters-eng/toterslokalise-ios.git",
-        from: "1.3.0"
+        from: "1.3.1"
     )
 ]
 ```

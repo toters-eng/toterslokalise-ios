@@ -81,7 +81,8 @@ private struct PlaceholderOrder {
   var types: [String: PlaceholderSpec]
 }
 
-private let tokenPattern = try! NSRegularExpression(pattern: #"\{\{|\}\}|\{([^{}]+)\}"#)
+// `${name}` is a template variable the app fills itself (App Shortcuts' `${applicationName}`), kept as written.
+private let tokenPattern = try! NSRegularExpression(pattern: #"\{\{|\}\}|(?<!\$)\{([^{}]+)\}"#)
 private let indexedPattern = try! NSRegularExpression(pattern: #"^(\d+)(?::(number|decimal:(\d)))?$"#)
 private let namedPattern = try! NSRegularExpression(
   pattern: #"^([A-Za-z_][A-Za-z0-9_]*)(?::(number|decimal:(\d)))?$"#)

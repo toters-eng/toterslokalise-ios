@@ -24,6 +24,8 @@ final class AppleStringsTests: XCTestCase {
       ("كم {0} عنصر", "كم %@ عنصر"),
       ("{0}% done", "%@%% done"),
       ("Already iOS %@", "Already iOS %@"),
+      ("${applicationName} orders", "${applicationName} orders"),
+      ("${app}: {0}% off", "${app}: %@%% off"),
     ]
     for (text, expected) in cases {
       XCTAssertEqual(appleStringsValue(text), expected, text)
